@@ -4,7 +4,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.example.task3.model.Contact
+import com.example.task3.room.Contact
 import com.example.task3.databinding.DialogBinding
 
 class DialogAdapter(var roomContactsList: List<Contact>, val itemClick: (Contact) -> Unit) :

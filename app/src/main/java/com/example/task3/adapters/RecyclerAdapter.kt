@@ -3,7 +3,7 @@ package com.example.task3.adapters
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.example.task3.model.Contact
+import com.example.task3.room.Contact
 import com.example.task3.databinding.ListItemBinding
 
 class RecyclerAdapter(var contactsList: List<Contact>, val itemClick: (Int) -> Unit) :

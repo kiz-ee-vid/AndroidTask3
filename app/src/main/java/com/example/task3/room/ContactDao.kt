@@ -1,7 +1,6 @@
-package com.example.task3.model
+package com.example.task3.room
 
 import androidx.room.*
-import com.example.task3.model.Contact
 
 @Dao
 interface ContactDao {

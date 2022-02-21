@@ -23,9 +23,9 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.task3.adapters.DialogAdapter
 import com.example.task3.adapters.RecyclerAdapter
 import com.example.task3.databinding.ActivityMainBinding
-import com.example.task3.model.Contact
-import com.example.task3.model.ContactDao
-import com.example.task3.model.ContactDatabase
+import com.example.task3.room.Contact
+import com.example.task3.room.ContactDao
+import com.example.task3.room.ContactDatabase
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -51,7 +51,7 @@ class MainActivity : AppCompatActivity() {
         initHandlers()
     }
 
-    @SuppressLint("Range", "Recycle", "NotifyDataSetChanged")
+    @SuppressLint("NotifyDataSetChanged")
     private fun initHandlers() {
         val recyclerView: RecyclerView = binding.list
         val contactsAdapter = RecyclerAdapter(ContactsList) {
@@ -84,72 +84,9 @@ class MainActivity : AppCompatActivity() {
 
         binding.chooseContact.setOnClickListener() {
             checkPermission()
-            if (ContextCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.READ_CONTACTS
-                ) == PackageManager.PERMISSION_GRANTED
-            ) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
                 CoroutineScope(Dispatchers.Default).launch {
-                    val list: MutableList<Contact> = ArrayList<Contact>().toMutableList()
-                    val cursor =
-                        contentResolver.query(
-                            ContactsContract.Contacts.CONTENT_URI,
-                            null,
-                            null,
-                            null,
-                            null
-                        )
-                    while (cursor?.moveToNext() == true) {
-                        val id =
-                            cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts._ID))
-                        var firstName: String? = null
-                        var lastName: String? = null
-                        val nameCursor = contentResolver.query(
-                            ContactsContract.Data.CONTENT_URI, null,
-                            ContactsContract.Data.MIMETYPE + " = ? AND " + ContactsContract.CommonDataKinds.StructuredName.CONTACT_ID + " = " + id,
-                            arrayOf(ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE),null)
-                        if (nameCursor?.moveToNext() == true) with(nameCursor) {
-                            firstName = getString(getColumnIndex(ContactsContract.CommonDataKinds.StructuredName.GIVEN_NAME))
-                            lastName = getString(getColumnIndex(ContactsContract.CommonDataKinds.StructuredName.FAMILY_NAME))
-                            close()
-                        }
-
-                        var email: String? = null
-                        val emailCursor = contentResolver.query(
-                            ContactsContract.CommonDataKinds.Email.CONTENT_URI,
-                            null,
-                            ContactsContract.CommonDataKinds.Email.CONTACT_ID + " = ?",
-                            arrayOf(id),
-                            null
-                        )
-                        if (emailCursor?.moveToNext() == true) {
-                            email =
-                                emailCursor.getString(emailCursor.getColumnIndex(ContactsContract.CommonDataKinds.Email.DATA))
-                            emailCursor.close()
-                        }
-
-                        var number: String? = null
-                        val phoneCursor = contentResolver.query(
-                            ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-                            null,
-                            ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?",
-                            arrayOf(id),
-                            null
-                        )
-                        if (phoneCursor?.moveToNext() == true) {
-                            number =
-                                phoneCursor.getString(phoneCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER))
-                            phoneCursor.close()
-                            println()
-                        }
-                        list += (Contact(
-                            id,
-                            firstName,
-                            lastName,
-                            number,
-                            email
-                        ))
-                    }
+                    val list = getContacts()
                     runOnUiThread {
                         ContactsList.clear()
                         ContactsList.addAll(list)
@@ -229,6 +166,71 @@ class MainActivity : AppCompatActivity() {
             sendNotification()
         }
         return true
+    }
+
+    @SuppressLint("Range", "Recycle")
+    fun getContacts(): MutableList<Contact> {
+        val list: MutableList<Contact> = ArrayList<Contact>().toMutableList()
+        val cursor =
+            contentResolver.query(
+                ContactsContract.Contacts.CONTENT_URI,
+                null,
+                null,
+                null,
+                null
+            )
+        while (cursor?.moveToNext() == true) {
+            val id =
+                cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts._ID))
+            var firstName: String? = null
+            var lastName: String? = null
+            val nameCursor = contentResolver.query(
+                ContactsContract.Data.CONTENT_URI, null,
+                ContactsContract.Data.MIMETYPE + " = ? AND " + ContactsContract.CommonDataKinds.StructuredName.CONTACT_ID + " = " + id,
+                arrayOf(ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE),null)
+            if (nameCursor?.moveToNext() == true) with(nameCursor) {
+                firstName = getString(getColumnIndex(ContactsContract.CommonDataKinds.StructuredName.GIVEN_NAME))
+                lastName = getString(getColumnIndex(ContactsContract.CommonDataKinds.StructuredName.FAMILY_NAME))
+                close()
+            }
+
+            var email: String? = null
+            val emailCursor = contentResolver.query(
+                ContactsContract.CommonDataKinds.Email.CONTENT_URI,
+                null,
+                ContactsContract.CommonDataKinds.Email.CONTACT_ID + " = ?",
+                arrayOf(id),
+                null
+            )
+            if (emailCursor?.moveToNext() == true) {
+                email =
+                    emailCursor.getString(emailCursor.getColumnIndex(ContactsContract.CommonDataKinds.Email.DATA))
+                emailCursor.close()
+            }
+
+            var number: String? = null
+            val phoneCursor = contentResolver.query(
+                ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                null,
+                ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?",
+                arrayOf(id),
+                null
+            )
+            if (phoneCursor?.moveToNext() == true) {
+                number =
+                    phoneCursor.getString(phoneCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER))
+                phoneCursor.close()
+                println()
+            }
+            list += (Contact(
+                id,
+                firstName,
+                lastName,
+                number,
+                email
+            ))
+        }
+        return list
     }
 
     private fun sendNotification() {

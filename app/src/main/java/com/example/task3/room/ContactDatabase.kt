@@ -1,4 +1,4 @@
-package com.example.task3.model
+package com.example.task3.room
 
 import android.content.Context
 import androidx.room.RoomDatabase
